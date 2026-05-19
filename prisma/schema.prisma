@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model OPRegister {
+  id             Int      @id @default(autoincrement())
+  sno            Int
+  date           DateTime
+  patientName    String
+  age            Int
+  sex            String
+  occupation     String
+  location       String
+  diagnosis      String
+  treatment      String
+  preAssessment  String
+  postAssessment String
+  amount         Int
+  typeOfVisit    String
+  createdAt      DateTime @default(now())
+}
