@@ -19,7 +19,7 @@ export default function LoginForm() {
           id="email"
           name="email"
           type="email"
-          placeholder="admin@sharon-physio.com"
+          placeholder="admin@sharonphysio.com"
           required
           autoComplete="email"
         />

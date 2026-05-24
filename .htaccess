@@ -1,0 +1,49 @@
+# Sharon Physiotherapy — Apache reverse proxy to Next.js (Node.js)
+# -----------------------------------------------------------------
+# Required Apache modules (must be enabled by the server admin):
+#   - mod_rewrite
+#   - mod_proxy
+#   - mod_proxy_http
+#   - mod_proxy_wstunnel  (only needed if you ever use websockets)
+#   - mod_headers         (optional, for caching + security headers)
+#
+# Required Apache config: AllowOverride All on the docroot.
+#
+# Assumes the Next.js production server (`npm start`) is running and
+# listening on http://127.0.0.1:3000 on the SAME machine as Apache,
+# typically managed by PM2 or systemd.
+
+RewriteEngine On
+
+# ---------- Optional: force HTTPS ----------
+# Uncomment after SSL is installed (e.g. via Let's Encrypt).
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# ---------- Reverse proxy everything to Node ----------
+# Static assets first (they live under /_next/static).
+RewriteRule ^_next/(.*)$ http://127.0.0.1:3000/_next/$1 [P,L]
+
+# Everything else (pages, API routes, server actions).
+RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+
+# ---------- Security headers (recommended) ----------
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  # Tell Next.js the original host & protocol the user hit.
+  RequestHeader set X-Forwarded-Proto "https" env=HTTPS
+</IfModule>
+
+# ---------- Cache Next.js immutable static assets ----------
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|woff2?|png|jpg|jpeg|svg|ico|webp)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+# ---------- Block direct access to sensitive files ----------
+<FilesMatch "^(\.env.*|package(-lock)?\.json|next\.config\.(ts|js)|prisma\.config\.ts|tsconfig\.json|\.gitignore|README\.md|RESTORE\.md|DEPLOYMENT\.md)$">
+  Require all denied
+</FilesMatch>
